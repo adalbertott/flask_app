@@ -41,6 +41,9 @@ def listar_projetos():
         })
     return jsonify(resultado), 200
 
+@app.route('/')
+def home():
+    return "Bem-vindo ao Flask App!"
 # Rota para criar um novo projeto
 @app.route('/projetos', methods=['POST'])
 def criar_projeto():
