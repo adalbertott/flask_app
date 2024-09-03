@@ -1,10 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import json
 
 app = Flask(__name__)
 
-# Configuração do banco de dados SQLite (ou outro banco configurado no Flask)
+# Configuração do banco de dados (aqui você pode trocar para um banco de dados diferente de SQLite se desejar)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'  # Substitua conforme necessário
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -34,9 +33,128 @@ class Habilidade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
 
-# Criar as tabelas no banco de dados
+# Modelo de Grande Área
+class GrandeArea(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+
+# Modelo de Hipótese
+class Hipotese(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    grande_area_id = db.Column(db.Integer, db.ForeignKey('grande_area.id'))
+    descricao = db.Column(db.Text, nullable=False)
+
+# Modelo de Questão
+class Questao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    grande_area_id = db.Column(db.Integer, db.ForeignKey('grande_area.id'))
+    descricao = db.Column(db.Text, nullable=False)
+
+# Modelo de Problema
+class Problema(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    grande_area_id = db.Column(db.Integer, db.ForeignKey('grande_area.id'))
+    descricao = db.Column(db.Text, nullable=False)
+    impacto = db.Column(db.Text, nullable=True)
+
+# Modelo de Possibilidade de Solução
+class PossibilidadeSolucao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    problema_id = db.Column(db.Integer, db.ForeignKey('problema.id'))
+    descricao = db.Column(db.Text, nullable=False)
+
+# Função para popular o banco de dados com as grandes áreas e suas informações
+def popular_banco_de_dados():
+    grandes_areas_dados = {
+        "Energia e Sustentabilidade": {
+            "hipoteses": [
+                "A redução das emissões de CO2 em processos industriais pode mitigar significativamente os efeitos das mudanças climáticas.",
+                "O desenvolvimento e a adoção de energias renováveis são cruciais para reduzir a dependência de combustíveis fósseis e limitar o aquecimento global.",
+                "A transição para fontes de energia renováveis, como solar, eólica e hidrelétrica, pode reduzir significativamente a pegada de carbono e a dependência de combustíveis fósseis."
+            ],
+            "questoes": [
+                "Como reduzir as emissões de CO2 em processos industriais sem comprometer a produtividade?",
+                "Quais tecnologias de energia renovável oferecem a melhor combinação de escalabilidade e eficiência?",
+                "Como lidar com o armazenamento de energia, intermitência das fontes renováveis e custos iniciais de instalação?"
+            ],
+            "problemas": {
+                "Redução de Emissões de CO2 em Processos Industriais": {
+                    "descricao": "Desenvolver soluções para reduzir as emissões de CO2 em processos industriais, focando em tecnologias e processos que possam ser implementados em fábricas de médio e grande porte.",
+                    "impacto": "Redução significativa das emissões de gases de efeito estufa, contribuindo para o combate às mudanças climáticas.",
+                    "possibilidades_de_solucao": [
+                        {
+                            "descricao": "Identificar e analisar tecnologias existentes que já são usadas para a redução de emissões de CO2."
+                        },
+                        {
+                            "descricao": "Identificar os principais padrões de emissão de CO2 em diferentes tipos de processos industriais."
+                        },
+                        {
+                            "descricao": "Criar propostas de soluções inovadoras que possam ser implementadas para reduzir emissões em processos industriais."
+                        }
+                    ]
+                }
+            }
+        },
+        "Agricultura e Alimentação": {
+            "hipoteses": [
+                "O uso de tecnologias avançadas, como sensores e drones, pode otimizar o uso de recursos e aumentar a produtividade, reduzindo desperdícios e melhorando a sustentabilidade.",
+                "A biotecnologia pode desenvolver cultivares mais resistentes a pragas e mudanças climáticas, além de melhorar a qualidade nutricional dos alimentos.",
+                "A agricultura vertical e a produção de alimentos em ambientes urbanos podem reduzir a pegada de carbono associada ao transporte e promover a segurança alimentar local."
+            ],
+            "questoes": [
+                "Como superar os custos iniciais elevados e integrar as novas tecnologias agrícolas com as práticas existentes?",
+                "Quais são os impactos ecológicos e éticos da biotecnologia no cultivo de plantas?",
+                "Como garantir a viabilidade econômica e a aceitação do mercado para a agricultura vertical?"
+            ],
+            "problemas": {
+                "Custo e Complexidade das Tecnologias de Agricultura de Precisão": {
+                    "descricao": "Alta barreira de entrada devido aos custos e complexidade técnica das tecnologias, que pode limitar a adoção por pequenos produtores."
+                },
+                "Segurança e Ética na Biotecnologia": {
+                    "descricao": "Questões sobre segurança alimentar e ética podem gerar resistência à aceitação pública e enfrentar desafios regulatórios."
+                },
+                "Viabilidade Econômica da Agricultura Vertical": {
+                    "descricao": "Os altos custos iniciais e a necessidade de alta eficiência energética podem dificultar a viabilidade econômica e a adoção em larga escala."
+                }
+            }
+        }
+    }
+
+    for area_nome, conteudo in grandes_areas_dados.items():
+        grande_area = GrandeArea(nome=area_nome)
+        db.session.add(grande_area)
+        db.session.commit()
+
+        for hipotese_desc in conteudo["hipoteses"]:
+            hipotese = Hipotese(grande_area_id=grande_area.id, descricao=hipotese_desc)
+            db.session.add(hipotese)
+
+        for questao_desc in conteudo["questoes"]:
+            questao = Questao(grande_area_id=grande_area.id, descricao=questao_desc)
+            db.session.add(questao)
+
+        for problema_nome, problema_conteudo in conteudo["problemas"].items():
+            problema = Problema(
+                grande_area_id=grande_area.id,
+                descricao=problema_conteudo["descricao"],
+                impacto=problema_conteudo.get("impacto", "")
+            )
+            db.session.add(problema)
+            db.session.commit()
+
+            for solucao in problema_conteudo.get("possibilidades_de_solucao", []):
+                possivel_solucao = PossibilidadeSolucao(
+                    problema_id=problema.id,
+                    descricao=solucao["descricao"]
+                )
+                db.session.add(possivel_solucao)
+
+    db.session.commit()
+
+# Criar as tabelas no banco de dados e popular
 with app.app_context():
     db.create_all()
+    popular_banco_de_dados()
 
 # Rota para listar todos os projetos
 @app.route('/projetos', methods=['GET'])
