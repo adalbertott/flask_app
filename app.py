@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+import json
 
 app = Flask(__name__)
 
@@ -184,6 +185,16 @@ def salvar_habilidade():
     db.session.add(nova_habilidade)
     db.session.commit()
     return jsonify({"message": "Habilidade salva com sucesso!"}), 201
+
+# Rota para visualizar o histórico de tarefas do usuário
+@app.route('/historico_tarefas', methods=['GET'])
+def historico_tarefas():
+    email = request.args.get('email')
+    usuario = Usuario.query.filter_by(email=email).first()
+    if usuario:
+        historico = json.loads(usuario.historico)  # Converte a string JSON de volta para uma lista
+        return jsonify(historico), 200
+    return jsonify({"message": "Usuário não encontrado!"}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
