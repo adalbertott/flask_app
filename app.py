@@ -3,8 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-# Configuração do banco de dados SQLite
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'
+# Configuração do banco de dados SQLite (ou outro banco configurado no Flask)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'  # Substitua conforme necessário
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
