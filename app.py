@@ -594,6 +594,27 @@ def gerar_relatorio_auditoria():
     relatorio_conteudo = f"Total de auditorias realizadas: {len(auditorias)}"
     return jsonify({"conteudo": relatorio_conteudo}), 200
 
+@app.route('/criar_grande_questao', methods=['POST'])
+def criar_grande_questao():
+    dados = request.json
+    nome = dados.get('nome')
+    descricao = dados.get('descricao')
+
+    if not nome or not descricao:
+        return jsonify({"message": "Nome e descrição são obrigatórios"}), 400
+
+    nova_questao = GrandeQuestao(nome=nome, descricao=descricao)
+    db.session.add(nova_questao)
+    db.session.commit()
+
+    return jsonify({"message": "Grande questão criada com sucesso!"}), 201
+
+@app.route('/grandes_problemas', methods=['GET'])
+def listar_grandes_problemas():
+    problemas = GrandeProblema.query.all()
+    resultado = [{'id': p.id, 'nome': p.nome} for p in problemas]
+    return jsonify(resultado), 200
+
 
 if __name__ == '__main__':
 

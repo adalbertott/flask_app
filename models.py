@@ -89,3 +89,9 @@ class AtividadeEquipe(db.Model):
     data_atividade = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     equipe = db.relationship('Equipe', backref=db.backref('atividades', lazy=True))
+
+class GrandeQuestao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
