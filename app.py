@@ -20,10 +20,19 @@ def index():
     return "Bem-vindo ao sistema de gerenciamento de projetos!"
 
 
-def executar_seed():
-    if not hasattr(app, '_seed_executado'):
-        seed_data()
-        app._seed_executado = True
+def seed_data():
+    # Verifica se o banco de dados já tem algum grande problema
+    if GrandeProblema.query.count() == 0:
+        # Se não houver nenhum registro, cria um exemplo
+        exemplo_problema = GrandeProblema(
+            nome="Problema Exemplo",
+            descricao="Este é um exemplo inicial de grande problema."
+        )
+        db.session.add(exemplo_problema)
+        db.session.commit()
+        print("Seed data inserido: Grande Problema exemplo criado.")
+    else:
+        print("Banco de dados já contém registros. Nenhum seed necessário.")
 
 @app.before_request
 def verificar_seed():
@@ -52,7 +61,6 @@ def listar_projetos():
         })
     return jsonify(resultado), 200
 
-# Rota para criar um novo projeto
 @app.route('/projetos', methods=['POST'])
 def criar_projeto():
     dados = request.json

@@ -1,8 +1,8 @@
 """a
 
-Revision ID: f90b4f2b3eb7
+Revision ID: f0984eaa72f6
 Revises: 
-Create Date: 2024-09-05 13:40:34.773974
+Create Date: 2024-09-05 14:09:03.837909
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f90b4f2b3eb7'
+revision = 'f0984eaa72f6'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,13 +30,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('grande_problema',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('nome', sa.String(length=100), nullable=False),
-    sa.Column('descricao', sa.Text(), nullable=False),
-    sa.Column('data_criacao', sa.DateTime(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('grande_questao',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nome', sa.String(length=100), nullable=False),
     sa.Column('descricao', sa.Text(), nullable=False),
@@ -200,7 +193,6 @@ def downgrade():
     op.drop_table('questao')
     op.drop_table('hipotese')
     op.drop_table('habilidade')
-    op.drop_table('grande_questao')
     op.drop_table('grande_problema')
     op.drop_table('grande_area')
     op.drop_table('equipe')

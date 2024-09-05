@@ -25,11 +25,13 @@ class Projeto(db.Model):
     grande_area_id = db.Column(db.Integer, db.ForeignKey('grande_area.id'))
     hipotese_id = db.Column(db.Integer, db.ForeignKey('hipotese.id'))
     questao_id = db.Column(db.Integer, db.ForeignKey('questao.id'))
-    grande_problema_id = db.Column(db.Integer, db.ForeignKey('grande_problema.id'), nullable=True)  # Novo campo para vincular ao Grande Problema
 
+    # Relacionamento com Grande Problema
+    grande_problema_id = db.Column(db.Integer, db.ForeignKey('grande_problema.id'), nullable=True)
+    
     # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
-    transacoes = db.relationship('Transacao', backref='projeto_transacao', lazy=True)  # Alterado para 'projeto_transacao'
+    transacoes = db.relationship('Transacao', backref='projeto', lazy=True)
 
     # Métodos para calcular progresso financeiro e de trabalho
     def calcular_progresso_financeiro(self):
@@ -38,6 +40,15 @@ class Projeto(db.Model):
     def calcular_progresso_trabalho(self):
         total_trabalho_necessario = sum(fase.percentual for fase in self.fases)
         return (self.contribuicao_trabalho / total_trabalho_necessario) * 100 if total_trabalho_necessario else 0
+
+
+# Modelo de Grande Problema
+class GrandeProblema(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    projetos = db.relationship('Projeto', backref='grande_problema', lazy=True)
 
 
 # Modelo de Fase do Projeto
@@ -107,12 +118,6 @@ class AtividadeEquipe(db.Model):
 
     equipe = db.relationship('Equipe', backref=db.backref('atividades', lazy=True))
 
-# Modelo de Grande Questão
-class GrandeQuestao(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    descricao = db.Column(db.Text, nullable=False)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Modelo de Grande Área
 class GrandeArea(db.Model):
@@ -179,10 +184,3 @@ class Feedback(db.Model):
 
     projeto = db.relationship('Projeto', backref='feedbacks')
 
-# Modelo de Grande Problema (Grande Questão)
-class GrandeProblema(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    descricao = db.Column(db.Text, nullable=False)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    projetos = db.relationship('Projeto', backref='grande_problema', lazy=True)
