@@ -25,6 +25,7 @@ class Projeto(db.Model):
     grande_area_id = db.Column(db.Integer, db.ForeignKey('grande_area.id'))
     hipotese_id = db.Column(db.Integer, db.ForeignKey('hipotese.id'))
     questao_id = db.Column(db.Integer, db.ForeignKey('questao.id'))
+    grande_problema_id = db.Column(db.Integer, db.ForeignKey('grande_problema.id'), nullable=True)  # Novo campo para vincular ao Grande Problema
 
     # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
@@ -177,3 +178,11 @@ class Feedback(db.Model):
     data_avaliacao = db.Column(db.DateTime, default=datetime.utcnow)
 
     projeto = db.relationship('Projeto', backref='feedbacks')
+
+# Modelo de Grande Problema (Grande Questão)
+class GrandeProblema(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    projetos = db.relationship('Projeto', backref='grande_problema', lazy=True)

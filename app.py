@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 from datetime import datetime
 from flask_migrate import Migrate
-from models import db, Projeto, FaseProjeto, Usuario, Habilidade, Tarefa, Equipe, AvaliacaoEquipe, AtividadeEquipe, Mensagem, Forum
+from models import db, Projeto, FaseProjeto, Usuario, Habilidade, Tarefa, Equipe, AvaliacaoEquipe, AtividadeEquipe, Mensagem, Forum, GrandeProblema 
 
 app = Flask(__name__)
 
@@ -43,23 +43,29 @@ def criar_projeto():
     dados = request.json
     nome = dados.get('nome')
     descricao = dados.get('descricao')
-    grande_area_id = dados.get('grande_area_id')
-    hipotese_id = dados.get('hipotese_id')
-    questao_id = dados.get('questao_id')
+    equipe = dados.get('equipe')
     recursos_necessarios = dados.get('recursos_necessarios')
+    grande_problema_id = dados.get('grande_problema_id')
+    sugestao_problema = dados.get('sugestao_problema')
 
-    if not nome or not descricao or not recursos_necessarios:
-        return jsonify({"error": "Nome, descrição e recursos necessários são obrigatórios"}), 400
+    if not nome or not descricao or not equipe or not recursos_necessarios:
+        return jsonify({"error": "Todos os campos obrigatórios devem ser preenchidos"}), 400
 
-    projeto = Projeto(
+    # Verifica se o grande_problema_id está vazio e há uma sugestão de problema
+    if not grande_problema_id and sugestao_problema:
+        novo_problema = GrandeProblema(nome=sugestao_problema, descricao="Sugerido pelo usuário")
+        db.session.add(novo_problema)
+        db.session.commit()
+        grande_problema_id = novo_problema.id  # Agora vincula o novo problema ao projeto
+
+    novo_projeto = Projeto(
         nome=nome,
         descricao=descricao,
-        grande_area_id=grande_area_id,
-        hipotese_id=hipotese_id,
-        questao_id=questao_id,
-        recursos_necessarios=recursos_necessarios
+        equipe=equipe,
+        recursos_necessarios=recursos_necessarios,
+        grande_problema_id=grande_problema_id
     )
-    db.session.add(projeto)
+    db.session.add(novo_projeto)
     db.session.commit()
 
     return jsonify({"message": "Projeto criado com sucesso!"}), 201
@@ -551,11 +557,11 @@ def criar_grande_questao():
 
     return jsonify({"message": "Grande questão criada com sucesso!"}), 201
 
-# Rota para listar grandes problemas
+# Rota para listar os grandes problemas existentes
 @app.route('/grandes_problemas', methods=['GET'])
 def listar_grandes_problemas():
-    problemas = GrandeProblema.query.all()
-    resultado = [{'id': p.id, 'nome': p.nome} for p in problemas]
+    grandes_problemas = GrandeProblema.query.all()
+    resultado = [{"id": problema.id, "nome": problema.nome, "descricao": problema.descricao} for problema in grandes_problemas]
     return jsonify(resultado), 200
 
 # Rota para enviar mensagem

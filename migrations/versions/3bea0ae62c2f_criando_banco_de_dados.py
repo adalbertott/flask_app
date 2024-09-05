@@ -1,8 +1,8 @@
-"""mapeamento tabela
+"""Criando banco de dados
 
-Revision ID: 3b7e8ee93272
+Revision ID: 3bea0ae62c2f
 Revises: 
-Create Date: 2024-09-05 12:45:10.297389
+Create Date: 2024-09-05 13:17:32.141223
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3b7e8ee93272'
+revision = '3bea0ae62c2f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,6 +27,13 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nome', sa.String(length=100), nullable=False),
     sa.Column('descricao', sa.Text(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('grande_problema',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('nome', sa.String(length=100), nullable=False),
+    sa.Column('descricao', sa.Text(), nullable=False),
+    sa.Column('data_criacao', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('grande_questao',
@@ -125,7 +132,9 @@ def upgrade():
     sa.Column('grande_area_id', sa.Integer(), nullable=True),
     sa.Column('hipotese_id', sa.Integer(), nullable=True),
     sa.Column('questao_id', sa.Integer(), nullable=True),
+    sa.Column('grande_problema_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['grande_area_id'], ['grande_area.id'], ),
+    sa.ForeignKeyConstraint(['grande_problema_id'], ['grande_problema.id'], ),
     sa.ForeignKeyConstraint(['hipotese_id'], ['hipotese.id'], ),
     sa.ForeignKeyConstraint(['questao_id'], ['questao.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -192,6 +201,7 @@ def downgrade():
     op.drop_table('hipotese')
     op.drop_table('habilidade')
     op.drop_table('grande_questao')
+    op.drop_table('grande_problema')
     op.drop_table('grande_area')
     op.drop_table('equipe')
     # ### end Alembic commands ###
