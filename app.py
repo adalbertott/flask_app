@@ -185,18 +185,30 @@ def reprovar_projeto():
 @app.route('/cadastrar_usuario', methods=['POST'])
 def cadastrar_usuario():
     dados = request.json
+    
+    # Verifica se o e-mail já existe no banco de dados
     if Usuario.query.filter_by(email=dados['email']).first():
         return jsonify({"message": "Usuário já existe!"}), 409
+    
+    # Criação do novo usuário
     novo_usuario = Usuario(
         nome=dados['nome'],
         email=dados['email'],
-        habilidades=','.join(dados['habilidades']),
+        habilidades=','.join(dados['habilidades']),  # Converte a lista de habilidades para uma string separada por vírgulas
         nivel=dados['nivel'],
-        historico='[]'
+        formacao=dados.get('formacao'),  # Usando o método get() para lidar com campos opcionais
+        instituicao=dados.get('instituicao'),
+        vinculo=dados.get('vinculo'),
+        especialidades=dados.get('especialidades'),
+        historico='[]'  # Inicializa o histórico como uma lista vazia em formato JSON
     )
+    
+    # Adiciona o novo usuário ao banco de dados
     db.session.add(novo_usuario)
     db.session.commit()
+
     return jsonify({"message": "Usuário cadastrado com sucesso!"}), 201
+
 
 # Rota para listar todos os usuários
 @app.route('/listar_usuarios', methods=['GET'])
