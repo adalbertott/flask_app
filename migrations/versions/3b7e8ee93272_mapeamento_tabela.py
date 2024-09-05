@@ -1,8 +1,8 @@
-"""Criando banco de dados
+"""mapeamento tabela
 
-Revision ID: c5c8e3e85cca
+Revision ID: 3b7e8ee93272
 Revises: 
-Create Date: 2024-09-05 12:23:50.862314
+Create Date: 2024-09-05 12:45:10.297389
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c5c8e3e85cca'
+revision = '3b7e8ee93272'
 down_revision = None
 branch_labels = None
 depends_on = None
