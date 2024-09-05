@@ -1,16 +1,7 @@
-from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import json
 from datetime import datetime
-from flask_migrate import Migrate
 
-app = Flask(__name__)
-
-# Configuração do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+db = SQLAlchemy()
 
 # Modelo de Projeto
 class Projeto(db.Model):
@@ -25,7 +16,28 @@ class Projeto(db.Model):
     nivel_atual = db.Column(db.Integer, default=1)  # Nível do projeto (1, 2, 3)
     recursos_necessarios = db.Column(db.Integer, nullable=False)  # Total de recursos necessários
     recursos_manutencao = db.Column(db.Integer, default=0)  # Recursos para manutenção
+
+    # Novos campos:
+    contribuicao_financeira = db.Column(db.Float, default=0)  # Contribuição financeira
+    contribuicao_trabalho = db.Column(db.Float, default=0)  # Contribuição de trabalho
+
+    # Relacionamentos com Grandes Áreas, Hipóteses e Questões
+    grande_area_id = db.Column(db.Integer, db.ForeignKey('grande_area.id'))
+    hipotese_id = db.Column(db.Integer, db.ForeignKey('hipotese.id'))
+    questao_id = db.Column(db.Integer, db.ForeignKey('questao.id'))
+
+    # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
+    transacoes = db.relationship('Transacao', backref='projeto', lazy=True)
+
+    # Métodos para calcular progresso financeiro e de trabalho
+    def calcular_progresso_financeiro(self):
+        return (self.contribuicao_financeira / self.recursos_necessarios) * 100 if self.recursos_necessarios else 0
+
+    def calcular_progresso_trabalho(self):
+        total_trabalho_necessario = sum(fase.percentual for fase in self.fases)
+        return (self.contribuicao_trabalho / total_trabalho_necessario) * 100 if total_trabalho_necessario else 0
+
 
 # Modelo de Fase do Projeto
 class FaseProjeto(db.Model):
@@ -42,6 +54,10 @@ class Usuario(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     habilidades = db.Column(db.Text)  # Armazenado como uma string separada por vírgulas
     nivel = db.Column(db.String(50), nullable=False)
+    formacao = db.Column(db.String(100), nullable=True)  # Grau de formação
+    instituicao = db.Column(db.String(100), nullable=True)  # Instituição de formação
+    vinculo = db.Column(db.String(100), nullable=True)  # Vínculo atual
+    especialidades = db.Column(db.Text, nullable=True)  # Múltiplas especialidades
     historico = db.Column(db.Text)  # Armazenado como uma string JSON
 
 # Modelo de Habilidade
@@ -90,8 +106,74 @@ class AtividadeEquipe(db.Model):
 
     equipe = db.relationship('Equipe', backref=db.backref('atividades', lazy=True))
 
+# Modelo de Grande Questão
 class GrandeQuestao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text, nullable=False)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Modelo de Grande Área
+class GrandeArea(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    projetos = db.relationship('Projeto', backref='grande_area', lazy=True)
+
+# Modelo de Hipótese
+class Hipotese(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    projetos = db.relationship('Projeto', backref='hipotese', lazy=True)
+
+# Modelo de Questão
+class Questao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    projetos = db.relationship('Projeto', backref='questao', lazy=True)
+
+# Modelo de Mensagem
+class Mensagem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    remetente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    destinatario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    conteudo = db.Column(db.Text, nullable=False)
+    data_envio = db.Column(db.DateTime, default=datetime.utcnow)
+
+    remetente = db.relationship('Usuario', foreign_keys=[remetente_id], backref='mensagens_enviadas')
+    destinatario = db.relationship('Usuario', foreign_keys=[destinatario_id], backref='mensagens_recebidas')
+
+# Modelo de Fórum
+class Forum(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    criador_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    conteudo = db.Column(db.Text, nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+
+    criador = db.relationship('Usuario', backref='foruns_criados')
+
+# Modelo de Transação
+class Transacao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'))
+    tipo = db.Column(db.String(50), nullable=False)  # 'virtual' ou 'real'
+    valor = db.Column(db.Float, nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    data_transacao = db.Column(db.DateTime, default=datetime.utcnow)
+
+    usuario = db.relationship('Usuario', backref='transacoes')
+    projeto = db.relationship('Projeto', backref='transacoes')
+
+# Modelo de Feedback
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'))
+    auditor = db.Column(db.String(100))
+    conteudo = db.Column(db.Text, nullable=False)
+    data_avaliacao = db.Column(db.DateTime, default=datetime.utcnow)
+
+    projeto = db.relationship('Projeto', backref='feedbacks')

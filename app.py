@@ -3,100 +3,19 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 from datetime import datetime
 from flask_migrate import Migrate
+from models import db, Projeto, FaseProjeto, Usuario, Habilidade, Tarefa, Equipe, AvaliacaoEquipe, AtividadeEquipe, Mensagem, Forum
 
 app = Flask(__name__)
 
 # Configuração do banco de dados
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+db.init_app(app)
 migrate = Migrate(app, db)  # Certifique-se de incluir esta linha
-
-class Projeto(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    descricao = db.Column(db.Text, nullable=False)
-    equipe = db.Column(db.String(200))
-    status = db.Column(db.String(50), nullable=False)
-    comentarios = db.Column(db.Text)
-    prazo_revisao = db.Column(db.String(50))
-    recursos_aprovados = db.Column(db.Integer, default=0)
-    nivel_atual = db.Column(db.Integer, default=1)  # Nível do projeto (1, 2, 3)
-    recursos_necessarios = db.Column(db.Integer, nullable=False)  # Total de recursos necessários
-    recursos_manutencao = db.Column(db.Integer, default=0)  # Recursos para manutenção
-
-    # Novos campos:
-    contribuicao_financeira = db.Column(db.Float, default=0)  # Contribuição financeira
-    contribuicao_trabalho = db.Column(db.Float, default=0)  # Contribuição de trabalho
-
-    fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
 
 @app.route('/')
 def index():
     return "Bem-vindo ao sistema de gerenciamento de projetos!"
-
-# Modelo de Fase do Projeto
-class FaseProjeto(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    descricao = db.Column(db.String(200), nullable=False)
-    percentual = db.Column(db.Float, nullable=False)  # Percentual de recursos para a fase
-    completada = db.Column(db.Boolean, default=False)
-    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'), nullable=False)
-
-# Modelo de Usuário
-class Usuario(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    habilidades = db.Column(db.Text)  # Armazenado como uma string separada por vírgulas
-    nivel = db.Column(db.String(50), nullable=False)
-    historico = db.Column(db.Text)  # Armazenado como uma string JSON
-
-# Modelo de Habilidade
-class Habilidade(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-
-# Modelo de Tarefa
-class Tarefa(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    descricao = db.Column(db.Text, nullable=False)
-    complexidade = db.Column(db.Integer, nullable=False)  # Nível de complexidade
-    valor = db.Column(db.Integer, nullable=False)  # Valor da tarefa baseado na complexidade
-
-# Modelo de Equipe
-class Equipe(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    membros = db.relationship('Usuario', secondary='equipe_membros', backref='equipes')
-
-# Tabela associativa para usuários em equipes
-equipe_membros = db.Table('equipe_membros',
-    db.Column('equipe_id', db.Integer, db.ForeignKey('equipe.id'), primary_key=True),
-    db.Column('usuario_id', db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
-)
-
-# Modelo de Avaliação da Equipe
-class AvaliacaoEquipe(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    equipe_id = db.Column(db.Integer, db.ForeignKey('equipe.id'), nullable=False)
-    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'), nullable=False)
-    avaliador = db.Column(db.String(100), nullable=False)  # Nome do avaliador
-    data_avaliacao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    nota = db.Column(db.Float, nullable=False)  # Nota de 0 a 10
-    comentarios = db.Column(db.Text)
-
-    equipe = db.relationship('Equipe', backref=db.backref('avaliacoes', lazy=True))
-    projeto = db.relationship('Projeto', backref=db.backref('avaliacoes', lazy=True))
-
-# Modelo de Atividade da Equipe
-class AtividadeEquipe(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    equipe_id = db.Column(db.Integer, db.ForeignKey('equipe.id'), nullable=False)
-    descricao = db.Column(db.Text, nullable=False)
-    data_atividade = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    equipe = db.relationship('Equipe', backref=db.backref('atividades', lazy=True))
 
 # Rota para listar todos os projetos
 @app.route('/projetos', methods=['GET'])
@@ -122,41 +41,50 @@ def listar_projetos():
 @app.route('/projetos', methods=['POST'])
 def criar_projeto():
     dados = request.json
-    novo_projeto = Projeto(
-        nome=dados['nome'],
-        descricao=dados['descricao'],
-        equipe=dados['equipe'],
-        status='Pendente',  # Inicialmente, o status será "Pendente"
-        recursos_necessarios=dados['recursos_necessarios']  # Recursos totais necessários para o projeto
+    nome = dados.get('nome')
+    descricao = dados.get('descricao')
+    grande_area_id = dados.get('grande_area_id')
+    hipotese_id = dados.get('hipotese_id')
+    questao_id = dados.get('questao_id')
+    recursos_necessarios = dados.get('recursos_necessarios')
+
+    if not nome or not descricao or not recursos_necessarios:
+        return jsonify({"error": "Nome, descrição e recursos necessários são obrigatórios"}), 400
+
+    projeto = Projeto(
+        nome=nome,
+        descricao=descricao,
+        grande_area_id=grande_area_id,
+        hipotese_id=hipotese_id,
+        questao_id=questao_id,
+        recursos_necessarios=recursos_necessarios
     )
-    db.session.add(novo_projeto)
+    db.session.add(projeto)
     db.session.commit()
+
     return jsonify({"message": "Projeto criado com sucesso!"}), 201
 
-# Rota para alocar recursos em um projeto com base no nível
+# Rota para alocar recursos em um projeto
 @app.route('/alocar_recursos', methods=['POST'])
 def alocar_recursos():
     dados = request.json
     projeto_id = dados['id']
-    recursos_totais = dados['recursos_totais']  # Recurso total disponível para o ciclo
+    recursos_totais = dados['recursos_totais']
 
     projeto = Projeto.query.get(projeto_id)
     if projeto:
-        # Definir porcentagens de alocação por nível
         if projeto.nivel_atual == 1:
-            recursos_necessarios = projeto.recursos_necessarios * 0.20  # 20% para Nível 1
+            recursos_necessarios = projeto.recursos_necessarios * 0.20
         elif projeto.nivel_atual == 2:
-            recursos_necessarios = projeto.recursos_necessarios * 0.30  # 30% para Nível 2
+            recursos_necessarios = projeto.recursos_necessarios * 0.30
         elif projeto.nivel_atual == 3:
-            recursos_necessarios = projeto.recursos_necessarios * 0.50  # 50% para Nível 3
+            recursos_necessarios = projeto.recursos_necessarios * 0.50
 
-        # Verificar se os recursos disponíveis são suficientes
         if recursos_totais >= recursos_necessarios:
             projeto.recursos_aprovados += recursos_necessarios
 
-            # Progredir de nível conforme frações do necessário para cada nível
             if projeto.recursos_aprovados >= projeto.recursos_necessarios * (projeto.nivel_atual / 3):
-                projeto.nivel_atual += 1  # Avança para o próximo nível
+                projeto.nivel_atual += 1
 
             db.session.commit()
             return jsonify({"message": "Recursos alocados e projeto atualizado!"}), 200
@@ -170,14 +98,13 @@ def alocar_recursos_fase():
     dados = request.json
     projeto_id = dados['projeto_id']
     fase_id = dados['fase_id']
-    recursos_totais = dados['recursos_totais']  # Recurso total disponível para a fase
+    recursos_totais = dados['recursos_totais']
 
     projeto = Projeto.query.get(projeto_id)
     fase = FaseProjeto.query.get(fase_id)
     if projeto and fase:
         recursos_necessarios = projeto.recursos_necessarios * (fase.percentual / 100)
 
-        # Verificar se os recursos disponíveis são suficientes
         if recursos_totais >= recursos_necessarios and not fase.completada:
             fase.completada = True
             projeto.recursos_aprovados += recursos_necessarios
@@ -265,7 +192,7 @@ def cadastrar_usuario():
         email=dados['email'],
         habilidades=','.join(dados['habilidades']),
         nivel=dados['nivel'],
-        historico='[]'  # Inicializa o histórico como uma lista vazia em formato JSON
+        historico='[]'
     )
     db.session.add(novo_usuario)
     db.session.commit()
@@ -309,7 +236,7 @@ def perfil_usuario():
         return jsonify(perfil), 200
     return jsonify({"message": "Usuário não encontrado!"}), 404
 
-# Rota para salvar habilidades (apenas para fins de exemplo, se precisar adicionar habilidades ao banco)
+# Rota para salvar habilidades
 @app.route('/salvar_habilidade', methods=['POST'])
 def salvar_habilidade():
     nome_habilidade = request.json.get('nome')
@@ -427,7 +354,6 @@ def listar_projetos_fases():
         })
     return jsonify(resultado), 200
 
-# --- Novas rotas para equipes e avaliações de equipes ---
 # Rota para criar uma equipe
 @app.route('/criar_equipe', methods=['POST'])
 def criar_equipe():
@@ -518,6 +444,7 @@ def consultar_atividades_equipe(equipe_id):
             'data_atividade': atividade.data_atividade.strftime('%Y-%m-%d')
         })
     return jsonify(resultado), 200
+
 # Rota para distribuir dividendos
 @app.route('/distribuir_dividendos', methods=['POST'])
 def distribuir_dividendos():
@@ -537,6 +464,7 @@ def distribuir_dividendos():
         else:
             return jsonify({"message": "Nenhuma contribuição foi feita."}), 400
     return jsonify({"message": "Projeto não encontrado!"}), 404
+
 # Rota para calcular a média ponderada de um projeto
 @app.route('/calcular_media_ponderada', methods=['POST'])
 def calcular_media_ponderada():
@@ -554,6 +482,7 @@ def calcular_media_ponderada():
         return jsonify({"media_ponderada": f"{media_ponderada:.2f}"}), 200
     return jsonify({"message": "Nenhuma avaliação encontrada!"}), 404
 
+# Rota para listar feedbacks
 @app.route('/listar_feedbacks', methods=['GET'])
 def listar_feedbacks():
     feedbacks = Feedback.query.all()
@@ -565,6 +494,7 @@ def listar_feedbacks():
     } for feedback in feedbacks]
     return jsonify(resultado), 200
 
+# Rota para registrar feedback
 @app.route('/registrar_feedback', methods=['POST'])
 def registrar_feedback():
     dados = request.json
@@ -586,14 +516,14 @@ def registrar_feedback():
 
     return jsonify({"message": "Feedback registrado com sucesso!"}), 200
 
+# Rota para gerar relatório de auditoria
 @app.route('/gerar_relatorio_auditoria', methods=['GET'])
 def gerar_relatorio_auditoria():
-
-    # Esta função pode ser expandida para gerar relatórios mais complexos
     auditorias = Feedback.query.all()
     relatorio_conteudo = f"Total de auditorias realizadas: {len(auditorias)}"
     return jsonify({"conteudo": relatorio_conteudo}), 200
 
+# Rota para criar grande questão
 @app.route('/criar_grande_questao', methods=['POST'])
 def criar_grande_questao():
     dados = request.json
@@ -609,13 +539,77 @@ def criar_grande_questao():
 
     return jsonify({"message": "Grande questão criada com sucesso!"}), 201
 
+# Rota para listar grandes problemas
 @app.route('/grandes_problemas', methods=['GET'])
 def listar_grandes_problemas():
     problemas = GrandeProblema.query.all()
     resultado = [{'id': p.id, 'nome': p.nome} for p in problemas]
     return jsonify(resultado), 200
 
+# Rota para enviar mensagem
+@app.route('/enviar_mensagem', methods=['POST'])
+def enviar_mensagem():
+    dados = request.json
+    remetente_id = dados.get('remetente_id')
+    destinatario_id = dados.get('destinatario_id')
+    conteudo = dados.get('conteudo')
+
+    if not remetente_id or not destinatario_id or not conteudo:
+        return jsonify({"message": "Campos obrigatórios faltando"}), 400
+
+    nova_mensagem = Mensagem(remetente_id=remetente_id, destinatario_id=destinatario_id, conteudo=conteudo)
+    db.session.add(nova_mensagem)
+    db.session.commit()
+
+    return jsonify({"message": "Mensagem enviada com sucesso!"}), 201
+
+# Rota para listar projetos por hipótese
+@app.route('/projetos_por_hipotese', methods=['GET'])
+def projetos_por_hipotese():
+    hipotese_id = request.args.get('hipotese_id')
+    projetos = Projeto.query.filter_by(hipotese_id=hipotese_id).all()
+    resultado = [{'id': p.id, 'nome': p.nome, 'descricao': p.descricao} for p in projetos]
+    return jsonify(resultado), 200
+
+# Rota para contribuir em um projeto
+@app.route('/projetos/<int:projeto_id>/contribuir', methods=['POST'])
+def contribuir_projeto(projeto_id):
+    dados = request.json
+    tipo_contribuicao = dados.get('tipo')
+    valor = dados.get('valor')
+
+    projeto = Projeto.query.get(projeto_id)
+    
+    if not projeto:
+        return jsonify({"error": "Projeto não encontrado"}), 404
+    
+    if tipo_contribuicao == 'financeira':
+        projeto.contribuicao_financeira += valor
+    elif tipo_contribuicao == 'trabalho':
+        projeto.contribuicao_trabalho += valor
+    else:
+        return jsonify({"error": "Tipo de contribuição inválido"}), 400
+
+    db.session.commit()
+    
+    return jsonify({"message": "Contribuição adicionada com sucesso!"}), 200
+
+# Rota para consultar o progresso de um projeto
+@app.route('/projetos/<int:projeto_id>/progresso', methods=['GET'])
+def progresso_projeto(projeto_id):
+    projeto = Projeto.query.get(projeto_id)
+    
+    if not projeto:
+        return jsonify({"error": "Projeto não encontrado"}), 404
+
+    progresso_financeiro = projeto.calcular_progresso_financeiro()
+    progresso_trabalho = projeto.calcular_progresso_trabalho()
+
+    return jsonify({
+        "progresso_financeiro": progresso_financeiro,
+        "progresso_trabalho": progresso_trabalho
+    }), 200
 
 if __name__ == '__main__':
-
     app.run(host='0.0.0.0', port=5000)
+   
