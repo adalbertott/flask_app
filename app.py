@@ -30,6 +30,11 @@ class Projeto(db.Model):
     contribuicao_trabalho = db.Column(db.Float, default=0)  # Contribuição de trabalho
 
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
+
+@app.route('/')
+def index():
+    return "Bem-vindo ao sistema de gerenciamento de projetos!"
+
 # Modelo de Fase do Projeto
 class FaseProjeto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -591,4 +596,5 @@ def gerar_relatorio_auditoria():
 
 
 if __name__ == '__main__':
+
     app.run(host='0.0.0.0', port=5000)
