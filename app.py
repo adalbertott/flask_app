@@ -4,6 +4,8 @@ import json
 from datetime import datetime
 from flask_migrate import Migrate
 from models import db, Projeto, FaseProjeto, Usuario, Habilidade, Tarefa, Equipe, AvaliacaoEquipe, AtividadeEquipe, Mensagem, Forum, GrandeProblema 
+from seed_data import seed_data
+
 
 app = Flask(__name__)
 
@@ -16,6 +18,19 @@ migrate = Migrate(app, db)  # Certifique-se de incluir esta linha
 @app.route('/')
 def index():
     return "Bem-vindo ao sistema de gerenciamento de projetos!"
+
+
+def executar_seed():
+    if not hasattr(app, '_seed_executado'):
+        seed_data()
+        app._seed_executado = True
+
+@app.before_request
+def verificar_seed():
+    if not hasattr(app, '_seed_executado'):
+        executar_seed()
+
+
 
 # Rota para listar todos os projetos
 @app.route('/projetos', methods=['GET'])
