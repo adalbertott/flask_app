@@ -172,10 +172,8 @@ class Transacao(db.Model):
     data_transacao = db.Column(db.DateTime, default=datetime.utcnow)
 
     usuario = db.relationship('Usuario', backref='transacoes')
-
-    # Ajustando o relacionamento para evitar conflitos
     projeto = db.relationship('Projeto', backref=db.backref('transacoes', lazy=True, overlaps="transacoes_projeto"))
-    
+
 # Modelo de Feedback
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
