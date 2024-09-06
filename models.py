@@ -31,7 +31,7 @@ class Projeto(db.Model):
     
     # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
-    transacoes = db.relationship('Transacao', backref='transacoes_projeto', lazy=True)
+    transacoes = db.relationship('Transacao', backref='projeto', lazy=True, overlaps="transacoes_projeto")
 
     # Métodos para calcular progresso financeiro e de trabalho
     def calcular_progresso_financeiro(self):
@@ -173,8 +173,8 @@ class Transacao(db.Model):
 
     usuario = db.relationship('Usuario', backref='transacoes')
 
-    # O backref também deve ser alterado para 'transacoes_projeto'
-    projeto = db.relationship('Projeto', backref=db.backref('transacoes_projeto', lazy=True))
+    # Ajustando o relacionamento para evitar conflitos
+    projeto = db.relationship('Projeto', backref=db.backref('transacoes', lazy=True, overlaps="transacoes_projeto"))
     
 # Modelo de Feedback
 class Feedback(db.Model):
@@ -185,4 +185,3 @@ class Feedback(db.Model):
     data_avaliacao = db.Column(db.DateTime, default=datetime.utcnow)
 
     projeto = db.relationship('Projeto', backref='feedbacks')
-
