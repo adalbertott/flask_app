@@ -1,8 +1,8 @@
-"""Ajuste de relacionamento Projeto e transacao 2
+"""o
 
-Revision ID: c1a6ceaca375
+Revision ID: 2ee5b30fc6cb
 Revises: 
-Create Date: 2024-09-06 16:10:00.370180
+Create Date: 2024-09-06 16:46:58.169053
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c1a6ceaca375'
+revision = '2ee5b30fc6cb'
 down_revision = None
 branch_labels = None
 depends_on = None

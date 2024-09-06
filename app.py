@@ -26,6 +26,11 @@ def executar_seed():
 def verificar_seed():
     executar_seed()
 
+@app.route('/')
+def index():
+    return "Bem-vindo ao app Flask!"
+
+
 # Rota para alocar recursos em um projeto
 @app.route('/alocar_recursos', methods=['POST'])
 def alocar_recursos():
