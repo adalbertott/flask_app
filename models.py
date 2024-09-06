@@ -31,7 +31,7 @@ class Projeto(db.Model):
     
     # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
-    transacoes = db.relationship('Transacao', backref='projeto', lazy=True, overlaps="transacoes_projeto")
+    transacoes = db.relationship('Transacao', backref='projeto_rel', lazy=True)  # Alteração do backref
 
     # Métodos para calcular progresso financeiro e de trabalho
     def calcular_progresso_financeiro(self):
@@ -41,6 +41,19 @@ class Projeto(db.Model):
         total_trabalho_necessario = sum(fase.percentual for fase in self.fases)
         return (self.contribuicao_trabalho / total_trabalho_necessario) * 100 if total_trabalho_necessario else 0
 
+
+# Modelo de Transação
+class Transacao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'))
+    tipo = db.Column(db.String(50), nullable=False)  # 'virtual' ou 'real'
+    valor = db.Column(db.Float, nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    data_transacao = db.Column(db.DateTime, default=datetime.utcnow)
+
+    usuario = db.relationship('Usuario', backref='transacoes')
+    projeto = db.relationship('Projeto', backref=db.backref('transacoes_projeto', lazy=True))  # Outro backref modificado
 
 # Modelo de Grande Problema
 class GrandeProblema(db.Model):
@@ -160,19 +173,6 @@ class Forum(db.Model):
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
 
     criador = db.relationship('Usuario', backref='foruns_criados')
-
-# Modelo de Transação
-class Transacao(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
-    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'))
-    tipo = db.Column(db.String(50), nullable=False)  # 'virtual' ou 'real'
-    valor = db.Column(db.Float, nullable=False)
-    descricao = db.Column(db.Text, nullable=True)
-    data_transacao = db.Column(db.DateTime, default=datetime.utcnow)
-
-    usuario = db.relationship('Usuario', backref='transacoes')
-    projeto = db.relationship('Projeto', backref=db.backref('transacoes', lazy=True, overlaps="transacoes_projeto"))
 
 # Modelo de Feedback
 class Feedback(db.Model):
