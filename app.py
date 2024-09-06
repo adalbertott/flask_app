@@ -15,83 +15,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 migrate = Migrate(app, db)  # Certifique-se de incluir esta linha
 
-@app.route('/')
-def index():
-    return "Bem-vindo ao sistema de gerenciamento de projetos!"
+# Função para executar o seed
+def executar_seed():
+    if not hasattr(app, '_seed_executado'):
+        seed_data()
+        app._seed_executado = True
 
-
-def seed_data():
-    # Verifica se o banco de dados já tem algum grande problema
-    if GrandeProblema.query.count() == 0:
-        # Se não houver nenhum registro, cria um exemplo
-        exemplo_problema = GrandeProblema(
-            nome="Problema Exemplo",
-            descricao="Este é um exemplo inicial de grande problema."
-        )
-        db.session.add(exemplo_problema)
-        db.session.commit()
-        print("Seed data inserido: Grande Problema exemplo criado.")
-    else:
-        print("Banco de dados já contém registros. Nenhum seed necessário.")
-
+# Verificar e rodar o seed antes da primeira requisição
 @app.before_request
 def verificar_seed():
-    if not hasattr(app, '_seed_executado'):
-        executar_seed()
-
-
-
-# Rota para listar todos os projetos
-@app.route('/projetos', methods=['GET'])
-def listar_projetos():
-    projetos = Projeto.query.all()
-    resultado = []
-    for projeto in projetos:
-        resultado.append({
-            'id': projeto.id,
-            'nome': projeto.nome,
-            'descricao': projeto.descricao,
-            'equipe': projeto.equipe,
-            'status': projeto.status,
-            'comentarios': projeto.comentarios,
-            'prazo_revisao': projeto.prazo_revisao,
-            'recursos_aprovados': projeto.recursos_aprovados,
-            'nivel_atual': projeto.nivel_atual,
-            'recursos_necessarios': projeto.recursos_necessarios
-        })
-    return jsonify(resultado), 200
-
-@app.route('/projetos', methods=['POST'])
-def criar_projeto():
-    dados = request.json
-    nome = dados.get('nome')
-    descricao = dados.get('descricao')
-    equipe = dados.get('equipe')
-    recursos_necessarios = dados.get('recursos_necessarios')
-    grande_problema_id = dados.get('grande_problema_id')
-    sugestao_problema = dados.get('sugestao_problema')
-
-    if not nome or not descricao or not equipe or not recursos_necessarios:
-        return jsonify({"error": "Todos os campos obrigatórios devem ser preenchidos"}), 400
-
-    # Verifica se o grande_problema_id está vazio e há uma sugestão de problema
-    if not grande_problema_id and sugestao_problema:
-        novo_problema = GrandeProblema(nome=sugestao_problema, descricao="Sugerido pelo usuário")
-        db.session.add(novo_problema)
-        db.session.commit()
-        grande_problema_id = novo_problema.id  # Agora vincula o novo problema ao projeto
-
-    novo_projeto = Projeto(
-        nome=nome,
-        descricao=descricao,
-        equipe=equipe,
-        recursos_necessarios=recursos_necessarios,
-        grande_problema_id=grande_problema_id
-    )
-    db.session.add(novo_projeto)
-    db.session.commit()
-
-    return jsonify({"message": "Projeto criado com sucesso!"}), 201
+    executar_seed()
 
 # Rota para alocar recursos em um projeto
 @app.route('/alocar_recursos', methods=['POST'])
