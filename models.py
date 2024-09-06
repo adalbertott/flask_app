@@ -172,7 +172,8 @@ class Transacao(db.Model):
     data_transacao = db.Column(db.DateTime, default=datetime.utcnow)
 
     usuario = db.relationship('Usuario', backref='transacoes')
-    projeto = db.relationship('Projeto', backref='transacoes_projeto')  # Alterado para 'transacoes_projeto'
+    # No modelo Transacao
+    projeto = db.relationship('Projeto', backref=db.backref('transacoes_projeto', lazy=True))
 
 # Modelo de Feedback
 class Feedback(db.Model):
