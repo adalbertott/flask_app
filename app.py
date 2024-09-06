@@ -250,6 +250,35 @@ def listar_tarefas():
         })
     return jsonify(resultado), 200
 
+@app.route('/projetos', methods=['POST'])
+def criar_projeto():
+    dados = request.json
+
+    # Verifique se os campos obrigatórios estão presentes
+    if not dados.get('nome') or not dados.get('descricao') or not dados.get('recursos_necessarios'):
+        return jsonify({"error": "Faltam campos obrigatórios!"}), 400
+
+    try:
+        novo_projeto = Projeto(
+            nome=dados['nome'],
+            descricao=dados['descricao'],
+            equipe=dados.get('equipe', ''),  # Campo opcional
+            status="Em avaliação",  # Defina o status inicial do projeto
+            recursos_necessarios=dados['recursos_necessarios'],
+            grande_problema_id=dados.get('grande_problema_id'),  # Pode ser None se não for fornecido
+            sugestao_problema=dados.get('sugestao_problema', '')  # Campo opcional
+        )
+
+        db.session.add(novo_projeto)
+        db.session.commit()
+
+        return jsonify({"message": "Projeto criado com sucesso!"}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Erro ao criar o projeto: {str(e)}"}), 500
+
+
 # Rota para criar uma nova tarefa
 @app.route('/criar_tarefa', methods=['POST'])
 def criar_tarefa():
