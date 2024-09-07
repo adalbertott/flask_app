@@ -602,6 +602,22 @@ def contribuir_projeto(projeto_id):
     
     return jsonify({"message": "Contribuição adicionada com sucesso!"}), 200
 
+@app.route('/projetos_fases', methods=['GET'], endpoint='listar_projetos_fases_unico')
+def listar_projetos_fases():
+    projetos = Projeto.query.all()
+    resultado = []
+    for projeto in projetos:
+        fases = FaseProjeto.query.filter_by(projeto_id=projeto.id).all()
+        fases_info = [{'descricao': fase.descricao, 'percentual': fase.percentual, 'completada': fase.completada} for fase in fases]
+        resultado.append({
+            'id': projeto.id,
+            'nome': projeto.nome,
+            'status': projeto.status,
+            'fases': fases_info
+        })
+    return jsonify(resultado), 200
+
+
 # Rota para consultar o progresso de um projeto
 @app.route('/projetos/<int:projeto_id>/progresso', methods=['GET'])
 def progresso_projeto(projeto_id):
