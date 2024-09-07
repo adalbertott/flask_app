@@ -1,8 +1,8 @@
 """Ajuste de relacionamento Projeto e Transacao
 
-Revision ID: 4d738ca81a0f
+Revision ID: a0f8af066d67
 Revises: 
-Create Date: 2024-09-06 20:53:38.220710
+Create Date: 2024-09-07 01:33:36.745121
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4d738ca81a0f'
+revision = 'a0f8af066d67'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -120,6 +120,7 @@ def upgrade():
     sa.Column('nivel_atual', sa.Integer(), nullable=True),
     sa.Column('recursos_necessarios', sa.Integer(), nullable=False),
     sa.Column('recursos_manutencao', sa.Integer(), nullable=True),
+    sa.Column('sugestao_problema', sa.String(length=255), nullable=False),
     sa.Column('contribuicao_financeira', sa.Float(), nullable=True),
     sa.Column('contribuicao_trabalho', sa.Float(), nullable=True),
     sa.Column('grande_area_id', sa.Integer(), nullable=True),

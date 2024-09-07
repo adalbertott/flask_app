@@ -16,6 +16,9 @@ class Projeto(db.Model):
     nivel_atual = db.Column(db.Integer, default=1)  # Nível do projeto (1, 2, 3)
     recursos_necessarios = db.Column(db.Integer, nullable=False)  # Total de recursos necessários
     recursos_manutencao = db.Column(db.Integer, default=0)  # Recursos para manutenção
+    
+    # Campo novo adicionado
+    sugestao_problema = db.Column(db.String(255), nullable=False)  # Campo para armazenar sugestões de problemas
 
     # Novos campos:
     contribuicao_financeira = db.Column(db.Float, default=0)  # Contribuição financeira
@@ -28,7 +31,7 @@ class Projeto(db.Model):
 
     # Relacionamento com Grande Problema
     grande_problema_id = db.Column(db.Integer, db.ForeignKey('grande_problema.id'), nullable=True)
-    
+
     # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
     transacoes = db.relationship('Transacao', backref='projeto_rel', lazy=True)  # Alteração do backref
