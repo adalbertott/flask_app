@@ -3,6 +3,11 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+db = SQLAlchemy()
+
 # Modelo de Projeto
 class Projeto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -17,8 +22,8 @@ class Projeto(db.Model):
     recursos_necessarios = db.Column(db.Integer, nullable=False)  # Total de recursos necessários
     recursos_manutencao = db.Column(db.Integer, default=0)  # Recursos para manutenção
     
-    # Campo novo adicionado
-    sugestao_problema = db.Column(db.String(255), nullable=False)  # Campo para armazenar sugestões de problemas
+    # Campo para armazenar sugestões de problemas relacionados ao projeto
+    sugestao_problema = db.Column(db.String(255), nullable=False)
 
     # Novos campos:
     contribuicao_financeira = db.Column(db.Float, default=0)  # Contribuição financeira
@@ -34,7 +39,7 @@ class Projeto(db.Model):
 
     # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
-    transacoes = db.relationship('Transacao', backref='projeto_rel', lazy=True)  # Alteração do backref
+    transacoes = db.relationship('Transacao', backref='projeto_rel', lazy=True)
 
     # Métodos para calcular progresso financeiro e de trabalho
     def calcular_progresso_financeiro(self):
@@ -56,7 +61,8 @@ class Transacao(db.Model):
     data_transacao = db.Column(db.DateTime, default=datetime.utcnow)
 
     usuario = db.relationship('Usuario', backref='transacoes')
-    projeto = db.relationship('Projeto', backref=db.backref('transacoes_projeto', lazy=True))  # Outro backref modificado
+    projeto = db.relationship('Projeto', backref=db.backref('transacoes_projeto', lazy=True))
+
 
 # Modelo de Grande Problema
 class GrandeProblema(db.Model):
@@ -75,6 +81,7 @@ class FaseProjeto(db.Model):
     completada = db.Column(db.Boolean, default=False)
     projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'), nullable=False)
 
+
 # Modelo de Usuário
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -87,6 +94,8 @@ class Usuario(db.Model):
     vinculo = db.Column(db.String(100), nullable=True)  # Vínculo atual
     especialidades = db.Column(db.Text, nullable=True)  # Múltiplas especialidades
     historico = db.Column(db.Text)  # Armazenado como uma string JSON
+
+
 
 # Modelo de Habilidade
 class Habilidade(db.Model):
