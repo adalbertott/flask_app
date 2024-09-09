@@ -319,6 +319,35 @@ def consultar_fases_projeto(projeto_id):
         })
     return jsonify(resultado), 200
 
+from flask import request, jsonify
+from models import db, Projeto, Tarefa
+
+# Rota para registrar uma tarefa completada e converter em moeda
+@app.route('/projetos/<int:projeto_id>/completar_tarefa', methods=['POST'])
+def completar_tarefa(projeto_id):
+    projeto = Projeto.query.get(projeto_id)
+    dados = request.json
+    tarefa_id = dados.get('tarefa_id')
+    
+    if projeto:
+        tarefa = Tarefa.query.get(tarefa_id)
+        if tarefa and not tarefa.completada:
+            tarefa.completada = True
+            projeto.tarefas_completadas += 1
+
+            # Conversão de tarefa em moeda (exemplo: 1 tarefa = 100 moedas)
+            moeda_por_tarefa = 100
+            moeda_total = moeda_por_tarefa
+            projeto.contribuicao_financeira += moeda_total
+
+            db.session.commit()
+            return jsonify({"message": "Tarefa completada e moedas convertidas!", "moeda_total": moeda_total}), 200
+        else:
+            return jsonify({"message": "Tarefa já foi completada ou não encontrada."}), 400
+    
+    return jsonify({"message": "Projeto não encontrado!"}), 404
+
+
 # Rota para atualizar uma fase de um projeto
 @app.route('/atualizar_fase_projeto/<int:projeto_id>', methods=['PUT'])
 def atualizar_fase_projeto(projeto_id):

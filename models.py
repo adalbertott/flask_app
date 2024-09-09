@@ -3,6 +3,7 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -25,6 +26,9 @@ class Projeto(db.Model):
     # Campo para armazenar sugestões de problemas relacionados ao projeto
     sugestao_problema = db.Column(db.String(255), nullable=False)
 
+    # Campo para rastrear tarefas completadas
+    tarefas_completadas = db.Column(db.Integer, default=0)  # Contagem de tarefas completadas
+
     # Novos campos:
     contribuicao_financeira = db.Column(db.Float, default=0)  # Contribuição financeira
     contribuicao_trabalho = db.Column(db.Float, default=0)  # Contribuição de trabalho
@@ -40,6 +44,7 @@ class Projeto(db.Model):
     # Relacionamentos adicionais:
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
     transacoes = db.relationship('Transacao', backref='projeto_rel', lazy=True)
+    tarefas = db.relationship('Tarefa', backref='projeto', lazy=True)  # Relacionamento com tarefas
 
     # Métodos para calcular progresso financeiro e de trabalho
     def calcular_progresso_financeiro(self):
@@ -48,6 +53,16 @@ class Projeto(db.Model):
     def calcular_progresso_trabalho(self):
         total_trabalho_necessario = sum(fase.percentual for fase in self.fases)
         return (self.contribuicao_trabalho / total_trabalho_necessario) * 100 if total_trabalho_necessario else 0
+
+
+# Modelo de Tarefa
+class Tarefa(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    descricao = db.Column(db.Text, nullable=False)
+    complexidade = db.Column(db.Integer, nullable=False)  # Nível de complexidade
+    valor = db.Column(db.Integer, nullable=False)  # Valor da tarefa em moedas
+    completada = db.Column(db.Boolean, default=False)  # Status de conclusão
+    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'))  # Ligação com o projeto
 
 
 # Modelo de Transação
@@ -101,13 +116,6 @@ class Usuario(db.Model):
 class Habilidade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
-
-# Modelo de Tarefa
-class Tarefa(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    descricao = db.Column(db.Text, nullable=False)
-    complexidade = db.Column(db.Integer, nullable=False)  # Nível de complexidade
-    valor = db.Column(db.Integer, nullable=False)  # Valor da tarefa baseado na complexidade
 
 # Modelo de Equipe
 class Equipe(db.Model):
