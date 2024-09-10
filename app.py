@@ -19,13 +19,17 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
-migrate = Migrate(app, db)  # Certifique-se de incluir esta linha
+migrate = Migrate(app, db)
 
-# Função para executar o seed
+# Verificar se o seed já foi executado
+seed_executado = False
+
+# Função para rodar o seed uma única vez
 def executar_seed():
-    if not hasattr(app, '_seed_executado'):
-        seed_data()
-        app._seed_executado = True
+    global seed_executado
+    if not seed_executado:
+        seed_data()  # Executa o seed apenas se ainda não tiver sido rodado
+        seed_executado = True
 
 # Verificar e rodar o seed antes da primeira requisição
 @app.before_request
@@ -48,4 +52,8 @@ app.register_blueprint(feedback_bp, url_prefix='/feedback')
 app.register_blueprint(problema_bp, url_prefix='/problemas')
 
 if __name__ == '__main__':
+    # Para garantir que o seed é executado ao iniciar o app
+    with app.app_context():
+        executar_seed()
+
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
