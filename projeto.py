@@ -3,6 +3,7 @@ from models import db, Projeto, FaseProjeto
 
 projeto_bp = Blueprint('projeto', __name__)
 
+# Criar novo projeto
 @projeto_bp.route('/', methods=['POST'])
 def criar_projeto():
     dados = request.json
@@ -23,6 +24,25 @@ def criar_projeto():
         db.session.rollback()
         return jsonify({"error": f"Erro ao criar o projeto: {str(e)}"}), 500
 
+# Listar todos os projetos (nova rota para listar projetos)
+@projeto_bp.route('/', methods=['GET'])
+def listar_projetos():
+    projetos = Projeto.query.all()
+    resultado = []
+    for projeto in projetos:
+        resultado.append({
+            'id': projeto.id,
+            'nome': projeto.nome,
+            'descricao': projeto.descricao,
+            'equipe': projeto.equipe,
+            'status': projeto.status,
+            'recursos_necessarios': projeto.recursos_necessarios,
+            'recursos_aprovados': projeto.recursos_aprovados,
+            'nivel_atual': projeto.nivel_atual
+        })
+    return jsonify(resultado), 200
+
+# Obter progresso de um projeto
 @projeto_bp.route('/<int:projeto_id>/progresso', methods=['GET'])
 def progresso_projeto(projeto_id):
     projeto = Projeto.query.get(projeto_id)
@@ -35,11 +55,16 @@ def progresso_projeto(projeto_id):
         "progresso_trabalho": progresso_trabalho
     }), 200
 
+# Alocar recursos para um projeto
 @projeto_bp.route('/alocar_recursos', methods=['POST'])
 def alocar_recursos():
     dados = request.json
-    projeto_id = dados['id']
-    recursos_totais = dados['recursos_totais']
+    projeto_id = dados.get('id')
+    recursos_totais = dados.get('recursos_totais')
+
+    if not projeto_id or recursos_totais is None:
+        return jsonify({"message": "Campos 'id' e 'recursos_totais' são obrigatórios!"}), 400
+
     projeto = Projeto.query.get(projeto_id)
     if projeto:
         if projeto.nivel_atual == 1:
