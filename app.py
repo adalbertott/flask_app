@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from models import db
+from models import db, Usuario, Projeto, Tarefa, Equipe, Habilidade, Feedback, GrandeProblema, FaseProjeto, AvaliacaoEquipe, AtividadeEquipe, Mensagem, Forum, GrandeArea, Hipotese, Questao  # Importe todos os modelos
 from seed_data import seed_data
 from mensagem import mensagem_bp
 from projeto import projeto_bp
@@ -40,6 +40,29 @@ def verificar_seed():
 @app.route('/')
 def index():
     return "Bem-vindo ao app Flask!"
+
+# Rota para verificar se o seed alimentou o banco de dados
+@app.route('/verificar_seed')
+def verificar_seed_status():
+    try:
+        # Verificar quantos registros existem na tabela 'Usuario' e 'Projeto'
+        total_usuarios = db.session.query(db.func.count(Usuario.id)).scalar()
+        total_projetos = db.session.query(db.func.count(Projeto.id)).scalar()
+
+        if total_usuarios > 0 and total_projetos > 0:
+            return {
+                "usuarios": total_usuarios,
+                "projetos": total_projetos,
+                "mensagem": "Seed alimentado corretamente!"
+            }, 200
+        else:
+            return {
+                "usuarios": total_usuarios,
+                "projetos": total_projetos,
+                "mensagem": "Seed não foi executado ou não inseriu dados corretamente."
+            }, 200
+    except Exception as e:
+        return {"erro": f"Erro ao verificar o seed: {str(e)}"}, 500
 
 # Registro dos Blueprints
 app.register_blueprint(mensagem_bp, url_prefix='/mensagens')
