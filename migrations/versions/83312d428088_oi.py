@@ -1,8 +1,8 @@
 """oi
 
-Revision ID: 7082a4e9b98d
+Revision ID: 83312d428088
 Revises: 
-Create Date: 2024-09-09 22:13:08.273225
+Create Date: 2024-09-10 04:20:03.625442
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7082a4e9b98d'
+revision = '83312d428088'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,6 +21,15 @@ def upgrade():
     op.create_table('equipe',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nome', sa.String(length=100), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('estagio_programa',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('estagio_atual', sa.String(length=100), nullable=False),
+    sa.Column('descricao', sa.Text(), nullable=False),
+    sa.Column('proximo_estagio', sa.String(length=100), nullable=False),
+    sa.Column('taxa_atual', sa.Float(), nullable=False),
+    sa.Column('objetivo_proximo', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('grande_area',
@@ -64,6 +73,9 @@ def upgrade():
     sa.Column('vinculo', sa.String(length=100), nullable=True),
     sa.Column('especialidades', sa.Text(), nullable=True),
     sa.Column('historico', sa.Text(), nullable=True),
+    sa.Column('moedas_trabalho', sa.Integer(), nullable=True),
+    sa.Column('pontos', sa.Integer(), nullable=True),
+    sa.Column('badges', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -157,6 +169,15 @@ def upgrade():
     sa.ForeignKeyConstraint(['projeto_id'], ['projeto.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('financiamento',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('usuario_id', sa.Integer(), nullable=False),
+    sa.Column('projeto_id', sa.Integer(), nullable=False),
+    sa.Column('valor_financiado', sa.Float(), nullable=False),
+    sa.ForeignKeyConstraint(['projeto_id'], ['projeto.id'], ),
+    sa.ForeignKeyConstraint(['usuario_id'], ['usuario.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('tarefa',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('descricao', sa.Text(), nullable=False),
@@ -194,6 +215,7 @@ def downgrade():
     op.drop_table('usuarios_tarefas')
     op.drop_table('transacao')
     op.drop_table('tarefa')
+    op.drop_table('financiamento')
     op.drop_table('feedback')
     op.drop_table('fase_projeto')
     op.drop_table('avaliacao_equipe')
@@ -208,5 +230,6 @@ def downgrade():
     op.drop_table('habilidade')
     op.drop_table('grande_problema')
     op.drop_table('grande_area')
+    op.drop_table('estagio_programa')
     op.drop_table('equipe')
     # ### end Alembic commands ###

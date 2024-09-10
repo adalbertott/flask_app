@@ -45,6 +45,7 @@ class Projeto(db.Model):
     fases = db.relationship('FaseProjeto', backref='projeto', lazy=True)
     transacoes = db.relationship('Transacao', backref='projeto_rel', lazy=True)
     tarefas = db.relationship('Tarefa', backref='projeto', lazy=True)  # Relacionamento com tarefas
+    financiamentos = db.relationship('Financiamento', backref='projeto', lazy=True)  # Relacionamento com financiamentos
 
     # Métodos para calcular progresso financeiro e de trabalho
     def calcular_progresso_financeiro(self):
@@ -65,6 +66,13 @@ class Tarefa(db.Model):
     projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'))  # Ligação com o projeto
     usuarios = db.relationship('Usuario', secondary=usuarios_tarefas, backref='tarefas')  # Relacionamento com usuários
 
+
+# Modelo de Financiamento (para associar usuários e projetos financiados)
+class Financiamento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'), nullable=False)
+    valor_financiado = db.Column(db.Float, nullable=False)  # Valor financiado pelo usuário
 
 # Modelo de Transação
 class Transacao(db.Model):
@@ -110,7 +118,19 @@ class Usuario(db.Model):
     vinculo = db.Column(db.String(100), nullable=True)  # Vínculo atual
     especialidades = db.Column(db.Text, nullable=True)  # Múltiplas especialidades
     historico = db.Column(db.Text)  # Armazenado como uma string JSON
+    moedas_trabalho = db.Column(db.Integer, default=100)  # Novo campo para moedas de trabalho
+    pontos = db.Column(db.Integer, default=0)  # Campo para pontos acumulados
+    badges = db.Column(db.Text, nullable=True)  # Badges recebidos, armazenado como uma string separada por vírgulas
+    financiamentos = db.relationship('Financiamento', backref='usuario', lazy=True)  # Relacionamento com projetos financiados
 
+# Modelo para armazenar informações sobre o estágio atual do programa
+class EstagioPrograma(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    estagio_atual = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=False)
+    proximo_estagio = db.Column(db.String(100), nullable=False)
+    taxa_atual = db.Column(db.Float, nullable=False)
+    objetivo_proximo = db.Column(db.Text, nullable=False)
 
 # Modelo de Habilidade
 class Habilidade(db.Model):
