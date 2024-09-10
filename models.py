@@ -3,11 +3,11 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-
-db = SQLAlchemy()
+# Tabela associativa para usuários e tarefas
+usuarios_tarefas = db.Table('usuarios_tarefas',
+    db.Column('usuario_id', db.Integer, db.ForeignKey('usuario.id'), primary_key=True),
+    db.Column('tarefa_id', db.Integer, db.ForeignKey('tarefa.id'), primary_key=True)
+)
 
 # Modelo de Projeto
 class Projeto(db.Model):
@@ -63,6 +63,7 @@ class Tarefa(db.Model):
     valor = db.Column(db.Integer, nullable=False)  # Valor da tarefa em moedas
     completada = db.Column(db.Boolean, default=False)  # Status de conclusão
     projeto_id = db.Column(db.Integer, db.ForeignKey('projeto.id'))  # Ligação com o projeto
+    usuarios = db.relationship('Usuario', secondary=usuarios_tarefas, backref='tarefas')  # Relacionamento com usuários
 
 
 # Modelo de Transação
@@ -109,7 +110,6 @@ class Usuario(db.Model):
     vinculo = db.Column(db.String(100), nullable=True)  # Vínculo atual
     especialidades = db.Column(db.Text, nullable=True)  # Múltiplas especialidades
     historico = db.Column(db.Text)  # Armazenado como uma string JSON
-
 
 
 # Modelo de Habilidade
