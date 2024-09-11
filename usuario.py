@@ -57,19 +57,34 @@ def listar_usuarios():
         })
     return jsonify(resultado), 200
 
+from flask import Blueprint, request, jsonify
+from models import db, Usuario
+import json
+
+usuario_bp = Blueprint('usuario', __name__)
+
 # Rota para obter o perfil de um usuário
 @usuario_bp.route('/perfil_usuario', methods=['GET'])
 def obter_perfil_usuario():
-    email = request.args.get('email').strip().lower()
+    try:
+        email = request.args.get('email').strip().lower()
+        print(f"Email recebido: {email}")  # Depuração: verificar o email recebido
 
-    usuario = Usuario.query.filter_by(email=email).first()
-    if not usuario:
-        return jsonify({"error": "Usuário não encontrado!"}), 404
+        # Tenta encontrar o usuário pelo email
+        usuario = Usuario.query.filter_by(email=email).first()
 
-    return jsonify({
-        "nome": usuario.nome,
-        "email": usuario.email,
-        "nivel": usuario.nivel,
-        "habilidades": usuario.habilidades.split(',') if usuario.habilidades else [],
-        "historico": json.loads(usuario.historico) if usuario.historico else []
-    }), 200
+        if not usuario:
+            print(f"Usuário não encontrado para o email: {email}")  # Depuração: mensagem de erro
+            return jsonify({"error": "Usuário não encontrado!"}), 404
+
+        # Se o usuário for encontrado, retorna os dados do perfil
+        return jsonify({
+            "nome": usuario.nome,
+            "email": usuario.email,
+            "nivel": usuario.nivel,
+            "habilidades": usuario.habilidades.split(',') if usuario.habilidades else [],
+            "historico": json.loads(usuario.historico) if usuario.historico else []
+        }), 200
+    except Exception as e:
+        print(f"Erro ao obter perfil: {str(e)}")  # Depuração: mostra o erro no servidor
+        return jsonify({"error": f"Erro ao obter perfil: {str(e)}"}), 500
