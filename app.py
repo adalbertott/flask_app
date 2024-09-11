@@ -39,6 +39,25 @@ def verificar_seed():
 def index():
     return "Bem-vindo ao app Flask!"
 
+@app.route('/verificar_seed', methods=['GET'])
+def verificar_seed_status():
+    total_usuarios = db.session.query(db.func.count(Usuario.id)).scalar()
+    total_projetos = db.session.query(db.func.count(Projeto.id)).scalar()
+
+    if total_usuarios > 0 and total_projetos > 0:
+        return jsonify({
+            "usuarios": total_usuarios,
+            "projetos": total_projetos,
+            "mensagem": "Seed alimentado corretamente!"
+        }), 200
+    else:
+        return jsonify({
+            "usuarios": total_usuarios,
+            "projetos": total_projetos,
+            "mensagem": "Seed não foi executado corretamente."
+        }), 200
+
+
 # Registro dos Blueprints
 app.register_blueprint(mensagem_bp, url_prefix='/mensagens')
 app.register_blueprint(projeto_bp, url_prefix='/projetos')
