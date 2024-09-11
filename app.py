@@ -1,11 +1,11 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from models import db, Usuario, Projeto  # Importe apenas o necessário
+from models import db, Usuario, Projeto  # Importe os modelos relevantes
 from seed_data import seed_data
 from mensagem import mensagem_bp
 from projeto import projeto_bp
-from usuario import usuario_bp
+from usuario import usuario_bp  # Certifique-se de que este arquivo existe e está correto
 from tarefa import tarefa_bp
 from equipe import equipe_bp
 from habilidade import habilidade_bp
@@ -16,22 +16,20 @@ import os
 app = Flask(__name__)
 
 # Configuração do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///dados2.db')  # Use variável de ambiente ou SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# Função para rodar o seed uma única vez, verificando no banco de dados
+# Função para rodar o seed uma única vez
 def executar_seed():
-    # Verifica se já existem usuários e projetos cadastrados
     total_usuarios = db.session.query(db.func.count(Usuario.id)).scalar()
     total_projetos = db.session.query(db.func.count(Projeto.id)).scalar()
 
     if total_usuarios == 0 and total_projetos == 0:
         seed_data()
-        print("Seed executado com sucesso!")
 
-# Verificar e rodar o seed antes da primeira requisição
+# Verificar e rodar o seed antes de qualquer requisição
 @app.before_request
 def verificar_seed():
     executar_seed()
@@ -40,28 +38,6 @@ def verificar_seed():
 @app.route('/')
 def index():
     return "Bem-vindo ao app Flask!"
-
-# Rota para verificar se o seed alimentou o banco de dados
-@app.route('/verificar_seed')
-def verificar_seed_status():
-    try:
-        total_usuarios = db.session.query(db.func.count(Usuario.id)).scalar()
-        total_projetos = db.session.query(db.func.count(Projeto.id)).scalar()
-
-        if total_usuarios > 0 and total_projetos > 0:
-            return {
-                "usuarios": total_usuarios,
-                "projetos": total_projetos,
-                "mensagem": "Seed alimentado corretamente!"
-            }, 200
-        else:
-            return {
-                "usuarios": total_usuarios,
-                "projetos": total_projetos,
-                "mensagem": "Seed não foi executado ou não inseriu dados corretamente."
-            }, 200
-    except Exception as e:
-        return {"erro": f"Erro ao verificar o seed: {str(e)}"}, 500
 
 # Registro dos Blueprints
 app.register_blueprint(mensagem_bp, url_prefix='/mensagens')
@@ -74,8 +50,6 @@ app.register_blueprint(feedback_bp, url_prefix='/feedback')
 app.register_blueprint(problema_bp, url_prefix='/problemas')
 
 if __name__ == '__main__':
-    # Para garantir que o seed é executado ao iniciar o app
     with app.app_context():
         executar_seed()
-
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='0.0.0.0', port=5000)
