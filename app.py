@@ -1,11 +1,15 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from models import db, Usuario, Projeto  # Importe os modelos relevantes
+from models import (
+    db, Usuario, Projeto, Tarefa, Equipe, Habilidade, Feedback, 
+    GrandeProblema, FaseProjeto, AvaliacaoEquipe, AtividadeEquipe, 
+    Mensagem, Forum, GrandeArea, Hipotese, Questao
+)
 from seed_data import seed_data
 from mensagem import mensagem_bp
 from projeto import projeto_bp
-from usuario import usuario_bp  # Certifique-se de que este arquivo existe e está correto
+from usuario import usuario_bp
 from tarefa import tarefa_bp
 from equipe import equipe_bp
 from habilidade import habilidade_bp
