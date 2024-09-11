@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from models import db, Usuario, Projeto, Tarefa, Equipe, Habilidade, Feedback, GrandeProblema, FaseProjeto, AvaliacaoEquipe, AtividadeEquipe, Mensagem, Forum, GrandeArea, Hipotese, Questao  # Importe todos os modelos
+from models import db, Usuario, Projeto  # Importe apenas o necessário
 from seed_data import seed_data
 from mensagem import mensagem_bp
 from projeto import projeto_bp
@@ -16,20 +16,20 @@ import os
 app = Flask(__name__)
 
 # Configuração do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dados2.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///dados2.db')  # Use variável de ambiente ou SQLite
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# Verificar se o seed já foi executado
-seed_executado = False
-
-# Função para rodar o seed uma única vez
+# Função para rodar o seed uma única vez, verificando no banco de dados
 def executar_seed():
-    global seed_executado
-    if not seed_executado:
-        seed_data()  # Executa o seed apenas se ainda não tiver sido rodado
-        seed_executado = True
+    # Verifica se já existem usuários e projetos cadastrados
+    total_usuarios = db.session.query(db.func.count(Usuario.id)).scalar()
+    total_projetos = db.session.query(db.func.count(Projeto.id)).scalar()
+
+    if total_usuarios == 0 and total_projetos == 0:
+        seed_data()
+        print("Seed executado com sucesso!")
 
 # Verificar e rodar o seed antes da primeira requisição
 @app.before_request
@@ -45,7 +45,6 @@ def index():
 @app.route('/verificar_seed')
 def verificar_seed_status():
     try:
-        # Verificar quantos registros existem na tabela 'Usuario' e 'Projeto'
         total_usuarios = db.session.query(db.func.count(Usuario.id)).scalar()
         total_projetos = db.session.query(db.func.count(Projeto.id)).scalar()
 
